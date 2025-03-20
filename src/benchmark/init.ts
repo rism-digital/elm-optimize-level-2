@@ -5,22 +5,24 @@ Compiles all the test cases and runs them via webdriver to summarize the results
 
 */
 
-
 import * as fs from 'fs';
 import * as path from 'path';
 
+export function generate(dir: string) {
+  fs.mkdirSync(path.join(dir, 'V8'), { recursive: true });
+  fs.mkdirSync(path.join(dir, 'V8', 'Benchmark', 'Runner'), {
+    recursive: true,
+  });
 
-export function generate(dir: string){
-    fs.mkdirSync(path.join(dir, "V8"), {recursive: true})
-    fs.mkdirSync(path.join(dir, "V8", "Benchmark", "Runner"), {recursive: true})
-
-    fs.writeFileSync(path.join(dir, "V8", "Benchmark.elm"), main)
-    fs.writeFileSync(path.join(dir, "V8", "Benchmark", "Status.elm"), status)
-    fs.writeFileSync(path.join(dir, "V8", "Benchmark", "Samples.elm"), samples)
-    fs.writeFileSync(path.join(dir, "V8", "Benchmark", "Runner", "Json.elm"), runner)
-    fs.writeFileSync(path.join(dir, "V8", "Debug.elm"),debug)
+  fs.writeFileSync(path.join(dir, 'V8', 'Benchmark.elm'), main);
+  fs.writeFileSync(path.join(dir, 'V8', 'Benchmark', 'Status.elm'), status);
+  fs.writeFileSync(path.join(dir, 'V8', 'Benchmark', 'Samples.elm'), samples);
+  fs.writeFileSync(
+    path.join(dir, 'V8', 'Benchmark', 'Runner', 'Json.elm'),
+    runner
+  );
+  fs.writeFileSync(path.join(dir, 'V8', 'Debug.elm'), debug);
 }
-
 
 const main = `port module V8.Benchmark exposing (main)
 
@@ -40,7 +42,7 @@ main =
 
 
 port reportResults : Json.Encode.Value -> Cmd msg
-`
+`;
 
 const runner = `module V8.Benchmark.Runner.Json exposing ( Benchmark, JsonBenchmark, program, describe, benchmark)
 
@@ -333,7 +335,7 @@ runsPerSecond =
     Trend.line
         >> (\a -> Trend.predictX a 1000)
         >> floor
-`
+`;
 
 const debug = `module V8.Debug exposing (enableMemoryChecks, disableMemoryChecks, memory, optimizationStatus, reportV8StatusForBenchmarks)
 
@@ -409,7 +411,7 @@ type alias MemoryProperties =
 reportV8StatusForBenchmarks : () -> Json.Encode.Value
 reportV8StatusForBenchmarks _ =
     Json.Encode.null
-`
+`;
 
 const status = `module V8.Benchmark.Status exposing
     ( Status(..), progress
@@ -525,7 +527,7 @@ samplesPerBucket =
 bucketSpacingRatio : Int
 bucketSpacingRatio =
     2
-`
+`;
 
 const samples = `module V8.Benchmark.Samples exposing
     ( Samples, empty, record, count
@@ -660,4 +662,4 @@ trend samples =
     samples
         |> points
         |> Tuple.first
-        |> quick`
+        |> quick`;

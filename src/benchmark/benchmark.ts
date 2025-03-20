@@ -1,6 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Transforms, RunTestcaseOptions, InlineLists, BrowserOptions, Browser, emptyOpts } from '../types';
+import {
+  Transforms,
+  RunTestcaseOptions,
+  InlineLists,
+  BrowserOptions,
+  Browser,
+  emptyOpts,
+} from '../types';
 import * as Visit from './visit';
 import * as Transform from '../transform';
 import { compileToStringSync } from 'node-elm-compiler';
@@ -32,16 +39,16 @@ type Results = {
 };
 
 type BenchRunFormatted = {
-    [key: string]:
-        {[key: string]:
-            { browser: Browser
-            , tag: string | null
-            , benchTags: string[]
-            , status: {runsPerSecond: number, goodnessOfFit: number}
-            , v8: V8FormattedData
-            }
-         }
-}
+  [key: string]: {
+    [key: string]: {
+      browser: Browser;
+      tag: string | null;
+      benchTags: string[];
+      status: { runsPerSecond: number; goodnessOfFit: number };
+      v8: V8FormattedData;
+    };
+  };
+};
 
 export function reformat(results: Visit.BenchRun[]): any {
   let project: string = 'Unknown';
@@ -54,7 +61,7 @@ export function reformat(results: Visit.BenchRun[]): any {
         tag: item.tag,
         benchTags: result.tags,
         status: result.status,
-        v8: reformatV8(item.v8)
+        v8: reformatV8(item.v8),
       };
       if (project in reformed) {
         if (result.name in reformed[project]) {
@@ -76,61 +83,70 @@ export function reformat(results: Visit.BenchRun[]): any {
 }
 
 type V8FormattedData = {
-    uncalled: string[],
-    optimized: string[],
-    interpreted: string[],
-    other: {status: string, name: string}[]
-    memory: {name: string, representation: string[]}[]
-}
+  uncalled: string[];
+  optimized: string[];
+  interpreted: string[];
+  other: { status: string; name: string }[];
+  memory: { name: string; representation: string[] }[];
+};
 
 function reformatV8(val: Visit.V8Data | null): V8FormattedData {
-    let gathered: V8FormattedData = {uncalled: [], optimized: [], interpreted: [], other: [], memory: []}
-    if (val == null) {
-        return gathered
+  let gathered: V8FormattedData = {
+    uncalled: [],
+    optimized: [],
+    interpreted: [],
+    other: [],
+    memory: [],
+  };
+  if (val == null) {
+    return gathered;
+  }
+  for (const key in val.fns) {
+    if (
+      key.startsWith('$elm_explorations$benchmark$Benchmark$') ||
+      key == '_Benchmark_operation'
+    ) {
+      continue;
     }
-    for (const key in val.fns){
-        if (key.startsWith("$elm_explorations$benchmark$Benchmark$") || key == "_Benchmark_operation"){
-            continue
-        }
-        const status: string = val.fns[key].status
+    const status: string = val.fns[key].status;
 
-        switch(status) {
-           case 'uncalled': {
-              gathered.uncalled.push(key)
-              break;
-           }
-           case 'optimized': {
-              gathered.optimized.push(key)
-              break;
-           }
-           case 'interpreted': {
-              gathered.interpreted.push(key)
-              break;
-           }
-           default: {
-              gathered.other.push( {status: status, name: key} )
-              break;
-           }
-        }
-
+    switch (status) {
+      case 'uncalled': {
+        gathered.uncalled.push(key);
+        break;
+      }
+      case 'optimized': {
+        gathered.optimized.push(key);
+        break;
+      }
+      case 'interpreted': {
+        gathered.interpreted.push(key);
+        break;
+      }
+      default: {
+        gathered.other.push({ status: status, name: key });
+        break;
+      }
     }
-    for (const key in val.memory){
-        gathered.memory.push({name: key, representation: v8MemoryDescription(val.memory[key]) })
-    }
-    return gathered
+  }
+  for (const key in val.memory) {
+    gathered.memory.push({
+      name: key,
+      representation: v8MemoryDescription(val.memory[key]),
+    });
+  }
+  return gathered;
 }
 
 function v8MemoryDescription(representation: Visit.Memory): string[] {
-    let descriptors = []
-    for (const key in representation){
-        if (representation[key]) {
-            descriptors.push(key)
-        }
+  let descriptors = [];
+  for (const key in representation) {
+    if (representation[key]) {
+      descriptors.push(key);
     }
-    return descriptors
+  }
+  return descriptors;
 }
-
-
 
 function sortResults(a: any, b: any) {
   if (a.browser == b.browser) {
@@ -179,11 +195,11 @@ export const run = async function (
       output: 'output/elm.opt.js',
       cwd: instance.dir,
       optimize: true,
-//       processOpts:
-//         // ignore stdout
-//         {
-//           stdio: ['pipe', 'pipe', 'pipe'],
-//         },
+      //       processOpts:
+      //         // ignore stdout
+      //         {
+      //           stdio: ['pipe', 'pipe', 'pipe'],
+      //         },
     });
 
     const transformed = await Transform.transform(
@@ -193,30 +209,23 @@ export const run = async function (
       options.verbose,
       options.transforms
     );
-    removeFilesFromDir(path.join(instance.dir, 'output'))
-    fs.writeFileSync(
-      path.join(instance.dir, 'output', '.keep'),
-      ""
-    );
+    removeFilesFromDir(path.join(instance.dir, 'output'));
+    fs.writeFileSync(path.join(instance.dir, 'output', '.keep'), '');
     fs.writeFileSync(path.join(instance.dir, 'output', 'elm.opt.js'), source);
     fs.writeFileSync(
       path.join(instance.dir, 'output', 'elm.opt.transformed.js'),
       transformed
     );
 
-    await Post.process(
-        path.join(instance.dir, 'output', 'elm.opt.js'),
-        { minify: options.minify
-        , gzip: options.gzip
-        }
-    )
+    await Post.process(path.join(instance.dir, 'output', 'elm.opt.js'), {
+      minify: options.minify,
+      gzip: options.gzip,
+    });
 
     await Post.process(
-        path.join(instance.dir, 'output', 'elm.opt.transformed.js'),
-        { minify: options.minify
-        , gzip: options.gzip
-        }
-    )
+      path.join(instance.dir, 'output', 'elm.opt.transformed.js'),
+      { minify: options.minify, gzip: options.gzip }
+    );
 
     if (options.assetSizes) {
       assets[instance.name] = assetSizeStats(path.join(instance.dir, 'output'));
@@ -224,31 +233,28 @@ export const run = async function (
 
     for (let browser of options.runBenchmark) {
       results.push(
-            await prepare_boilerplate(
-                  browser,
-                  instance.name,
-                  null,
-                  instance.dir,
-                  source
-                )
-                );
+        await prepare_boilerplate(
+          browser,
+          instance.name,
+          null,
+          instance.dir,
+          source
+        )
+      );
 
       results.push(
-            await prepare_boilerplate(
-                  browser,
-                  instance.name,
-                  'final',
-                  instance.dir,
-                  transformed
-                )
-                );
-      }
+        await prepare_boilerplate(
+          browser,
+          instance.name,
+          'final',
+          instance.dir,
+          transformed
+        )
+      );
+    }
   }
   return { assets: assets, benchmarks: reformat(results) };
 };
-
-
-
 
 const breakdown = function (
   options: Transforms
@@ -352,12 +358,10 @@ export const runWithBreakdown = async function (
         },
     });
     fs.writeFileSync(path.join(instance.dir, 'output', 'elm.opt.js'), source);
-    await Post.process(
-        path.join(instance.dir, 'output', 'elm.opt.js'),
-        { minify: options.minify
-        , gzip: options.gzip
-        }
-    )
+    await Post.process(path.join(instance.dir, 'output', 'elm.opt.js'), {
+      minify: options.minify,
+      gzip: options.gzip,
+    });
     const transformed = await Transform.transform(
       instance.dir,
       source,
@@ -371,34 +375,31 @@ export const runWithBreakdown = async function (
       transformed
     );
     await Post.process(
-        path.join(instance.dir, 'output', 'elm.opt.transformed.js'),
-        { minify: options.minify
-        , gzip: options.gzip
-        }
-    )
+      path.join(instance.dir, 'output', 'elm.opt.transformed.js'),
+      { minify: options.minify, gzip: options.gzip }
+    );
 
     for (let browser of options.runBenchmark) {
-        results.push(
-            await prepare_boilerplate(
-                  browser,
-                  instance.name,
-                  null,
-                  instance.dir,
-                  source
-                )
-                );
+      results.push(
+        await prepare_boilerplate(
+          browser,
+          instance.name,
+          null,
+          instance.dir,
+          source
+        )
+      );
 
-        results.push(
-            await prepare_boilerplate(
-                  browser,
-                  instance.name,
-                  'final',
-                  instance.dir,
-                  transformed
-                )
-                );
+      results.push(
+        await prepare_boilerplate(
+          browser,
+          instance.name,
+          'final',
+          instance.dir,
+          transformed
+        )
+      );
     }
-
 
     let steps = breakdown(options.transforms);
     for (let i in steps) {
@@ -417,21 +418,19 @@ export const runWithBreakdown = async function (
 
       await Post.process(
         path.join(instance.dir, 'output', `elm.opt.${dashedLabel}.js`),
-        { minify: options.minify
-        , gzip: options.gzip
-        }
-      )
+        { minify: options.minify, gzip: options.gzip }
+      );
 
       for (let browser of options.runBenchmark) {
         results.push(
-            await prepare_boilerplate(
-                  browser,
-                  instance.name,
-                  steps[i].name,
-                  instance.dir,
-                  intermediate
-                )
-                );
+          await prepare_boilerplate(
+            browser,
+            instance.name,
+            steps[i].name,
+            instance.dir,
+            intermediate
+          )
+        );
       }
     }
 
@@ -477,43 +476,38 @@ export const runWithKnockout = async function (
       options.transforms
     );
 
-    removeFilesFromDir(path.join(instance.dir, 'output'))
+    removeFilesFromDir(path.join(instance.dir, 'output'));
 
-    fs.writeFileSync(
-      path.join(instance.dir, 'output', '.keep'),
-      ""
-    );
+    fs.writeFileSync(path.join(instance.dir, 'output', '.keep'), '');
     fs.writeFileSync(
       path.join(instance.dir, 'output', 'elm.opt.transformed.js'),
       transformed
     );
     await Post.process(
-        path.join(instance.dir, 'output', 'elm.opt.transformed.js'),
-        { minify: options.minify
-        , gzip: options.gzip
-        }
-    )
+      path.join(instance.dir, 'output', 'elm.opt.transformed.js'),
+      { minify: options.minify, gzip: options.gzip }
+    );
 
     for (let browser of options.runBenchmark) {
-        results.push(
-            await prepare_boilerplate(
-                  browser,
-                  instance.name,
-                  null,
-                  instance.dir,
-                  source
-                )
-                );
+      results.push(
+        await prepare_boilerplate(
+          browser,
+          instance.name,
+          null,
+          instance.dir,
+          source
+        )
+      );
 
-        results.push(
-            await prepare_boilerplate(
-                  browser,
-                  instance.name,
-                  'final',
-                  instance.dir,
-                  transformed
-                )
-                );
+      results.push(
+        await prepare_boilerplate(
+          browser,
+          instance.name,
+          'final',
+          instance.dir,
+          transformed
+        )
+      );
     }
 
     let steps = knockout(options.transforms);
@@ -532,25 +526,21 @@ export const runWithKnockout = async function (
       );
       await Post.process(
         path.join(instance.dir, 'output', `elm.opt.minus-${dashedLabel}.js`),
-        { minify: options.minify
-        , gzip: options.gzip
-        }
-      )
+        { minify: options.minify, gzip: options.gzip }
+      );
 
       for (let browser of options.runBenchmark) {
         results.push(
-            await prepare_boilerplate(
-                  browser,
-                  instance.name,
-                  steps[i].name,
-                  instance.dir,
-                  intermediate
-                )
-                );
+          await prepare_boilerplate(
+            browser,
+            instance.name,
+            steps[i].name,
+            instance.dir,
+            intermediate
+          )
+        );
       }
     }
-
-
 
     assets[instance.name] = assetSizeStats(path.join(instance.dir, 'output'));
   }
@@ -631,11 +621,7 @@ const knockout = function (
   return transforms;
 };
 
-
-
 // BOILERPLATE MANAGEMENT
-
-
 
 const htmlTemplate = `
 <html>
@@ -663,7 +649,7 @@ const htmlTemplate = `
     <script src="v8-browser.js" onload="waitForV8(start)"></script>
   </body>
 </html>
-`
+`;
 
 const jsTemplate = `const { Elm } = require("./elm.opt.transformed.js")
 globalThis["v8"] = require('./v8-node.js');
@@ -677,9 +663,7 @@ const main = () =>
         console.log(JSON.stringify(report))
     })
 
-main()`
-
-
+main()`;
 
 /*
 
@@ -694,42 +678,38 @@ main()`
 
 */
 
-
-function removeFilesFromDir(dir: string){
-    const files = fs.readdirSync(dir)
-    for (const file of files) {
-        fs.unlinkSync(path.join(dir, file));
-    }
+function removeFilesFromDir(dir: string) {
+  const files = fs.readdirSync(dir);
+  for (const file of files) {
+    fs.unlinkSync(path.join(dir, file));
+  }
 }
 
 async function prepare_boilerplate(
-    browser: BrowserOptions,
-    name:string,
-    tag: string | null,
-    dir: string,
-    js: string
-    ) {
+  browser: BrowserOptions,
+  name: string,
+  tag: string | null,
+  dir: string,
+  js: string
+) {
+  const base = path.join(dir, 'elm-stuff', 'elm-optimize-level-2');
+  const htmlPath = path.join(base, 'run.html');
+  const jsPath = path.join(base, 'run.js');
 
-    const base = path.join(dir, 'elm-stuff', 'elm-optimize-level-2')
-    const htmlPath =  path.join(base, 'run.html')
-    const jsPath =  path.join(base, 'run.js')
+  const nonNulltag = tag ? '.' + tag.replace(unallowedChars, '-') : '';
+  const jitLogPath = path.join(dir, 'output', `elm.opt${nonNulltag}.jitlog`);
 
-    const nonNulltag = tag ? '.' + tag.replace(unallowedChars, '-') : ''
-    const jitLogPath = path.join(dir, 'output', `elm.opt${nonNulltag}.jitlog`)
-
-    fs.mkdirSync(base, {recursive: true})
-    fs.writeFileSync(htmlPath, htmlTemplate)
-    fs.writeFileSync(jsPath, jsTemplate)
-    fs.writeFileSync(path.join(base, 'elm.opt.transformed.js'), js)
-    await Post.includeV8Helpers(path.join(base))
-    return await Visit.benchmark(
-          browser,
-          name,
-          tag,
-          htmlPath,
-          jsPath,
-          jitLogPath
-        )
-
+  fs.mkdirSync(base, { recursive: true });
+  fs.writeFileSync(htmlPath, htmlTemplate);
+  fs.writeFileSync(jsPath, jsTemplate);
+  fs.writeFileSync(path.join(base, 'elm.opt.transformed.js'), js);
+  await Post.includeV8Helpers(path.join(base));
+  return await Visit.benchmark(
+    browser,
+    name,
+    tag,
+    htmlPath,
+    jsPath,
+    jitLogPath
+  );
 }
-

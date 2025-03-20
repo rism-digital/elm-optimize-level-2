@@ -1,0 +1,9 @@
+@@ -45,7 +45,7 @@
+           return ts.updateVariableStatement(
+             node,
+             undefined,
+-            ts.updateVariableDeclarationList(declList, filteredDeclarations)
++            ts.factory.updateVariableDeclarationList(declList, filteredDeclarations)
+           );
+         }
+       }

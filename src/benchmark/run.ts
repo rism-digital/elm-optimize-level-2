@@ -5,14 +5,11 @@ Compiles all the test cases and runs them via webdriver to summarize the results
 
 */
 
-import {
-  Browser,
-} from '../types';
+import { Browser } from '../types';
 import * as Reporting from './reporting';
 import * as Benchmark from './benchmark';
 import * as fs from 'fs';
-import * as Types from '../types'
-
+import * as Types from '../types';
 
 const options = {
   compile: true,
@@ -34,10 +31,8 @@ const options = {
       headless: true,
     },
   ],
-  transforms: 
-    Types.benchmarkDefaults(true, null)
-//     Types.previous.v1
-  
+  transforms: Types.benchmarkDefaults(true, null),
+  //     Types.previous.v1
 };
 
 async function go() {
@@ -70,7 +65,7 @@ async function go() {
       dir: 'testcases/elm-ui',
       elmFile: 'V8/Benchmark.elm',
     },
-//     {
+    //     {
     //   name: 'Elm UI 2',
     //   dir: 'testcases/elm-ui-2',
     //   elmFile: 'V8/Benchmark.elm',

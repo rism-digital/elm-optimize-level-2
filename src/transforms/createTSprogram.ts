@@ -5,7 +5,7 @@ const defaultCompilerHost = ts.createCompilerHost({});
 
 function serveLibFile(
   name: string,
-  languageVersion: ts.ScriptTarget
+  languageVersion: ts.ScriptTarget | ts.CreateSourceFileOptions
 ): ts.SourceFile | undefined {
   const cached = cache.get(name);
   if (cached) return cached;
@@ -40,7 +40,7 @@ export const createProgramFromSource = (
     getDefaultLibFileName: () =>
       'node_modules/typescript/lib/lib.es2018.full.d.ts',
     useCaseSensitiveFileNames: () => false,
-    getCanonicalFileName: filename => filename,
+    getCanonicalFileName: (filename) => filename,
     getCurrentDirectory: () => '',
     getNewLine: () => '\n',
     getDirectories: () => [],

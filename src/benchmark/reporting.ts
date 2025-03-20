@@ -6,7 +6,6 @@ export interface Stat {
   bytes: number;
 }
 
-
 type Results = {
   assets: { [key: string]: Stat[] };
   benchmarks: any;
@@ -83,43 +82,56 @@ export const terminal = (report: Results): string => {
           buffer.push(label.padEnd(60, ' ') + datapoint);
 
           if (item.v8) {
-            if (item.v8.uncalled.length + item.v8.interpreted.length + item.v8.optimized.length + item.v8.other.length + item.v8.memory.length > 0) {
-                buffer.push("")
+            if (
+              item.v8.uncalled.length +
+                item.v8.interpreted.length +
+                item.v8.optimized.length +
+                item.v8.other.length +
+                item.v8.memory.length >
+              0
+            ) {
+              buffer.push('');
             }
 
+            if (item.v8.interpreted.length > 0) {
+              buffer.push('   ' + chalk.yellow('Interpreted'));
 
-            if (item.v8.interpreted.length > 0){
-                buffer.push("   " + chalk.yellow("Interpreted"))
-
-                buffer.push("       " + item.v8.interpreted.join("\n       ")  )
-                buffer.push("")
+              buffer.push('       ' + item.v8.interpreted.join('\n       '));
+              buffer.push('');
             }
-            if (item.v8.optimized.length > 0){
-                buffer.push("   " + chalk.green("Optimized"))
+            if (item.v8.optimized.length > 0) {
+              buffer.push('   ' + chalk.green('Optimized'));
 
-                buffer.push("       " + item.v8.optimized.join("\n       ") )
-                buffer.push("")
+              buffer.push('       ' + item.v8.optimized.join('\n       '));
+              buffer.push('');
             }
-            if (item.v8.other.length > 0){
-                buffer.push("   " + chalk.green("Unknown status"))
-                for (const func of item.v8.other){
-                     buffer.push("        " + func.name + ", status: " + func.status )
-                }
-            }
-
-             if (item.v8.uncalled.length > 0){
-                buffer.push("   " + chalk.yellow("Uncalled"))
-                buffer.push("       " + item.v8.uncalled.join("\n       ") )
-                buffer.push("")
+            if (item.v8.other.length > 0) {
+              buffer.push('   ' + chalk.green('Unknown status'));
+              for (const func of item.v8.other) {
+                buffer.push(
+                  '        ' + func.name + ', status: ' + func.status
+                );
+              }
             }
 
-             if (item.v8.memory.length > 0){
-                buffer.push("   " + chalk.yellow("Memory representation"))
-                for (const mem of item.v8.memory){
-                     buffer.push("       " + mem.name + "\n          " + mem.representation.join("\n          "))
-                     buffer.push("")
-                }
-             }
+            if (item.v8.uncalled.length > 0) {
+              buffer.push('   ' + chalk.yellow('Uncalled'));
+              buffer.push('       ' + item.v8.uncalled.join('\n       '));
+              buffer.push('');
+            }
+
+            if (item.v8.memory.length > 0) {
+              buffer.push('   ' + chalk.yellow('Memory representation'));
+              for (const mem of item.v8.memory) {
+                buffer.push(
+                  '       ' +
+                    mem.name +
+                    '\n          ' +
+                    mem.representation.join('\n          ')
+                );
+                buffer.push('');
+              }
+            }
           }
         } else {
           console.log('FAILURE', item);
@@ -137,15 +149,14 @@ export const terminal = (report: Results): string => {
 };
 
 function v8MemoryDescription(representation: Visit.Memory): string[] {
-    let descriptors = []
-    for (const key in representation){
-        if (representation[key]) {
-            descriptors.push(key)
-        }
+  let descriptors = [];
+  for (const key in representation) {
+    if (representation[key]) {
+      descriptors.push(key);
     }
-    return descriptors
+  }
+  return descriptors;
 }
-
 
 // Render results as markdown
 export const markdown = (report: Results): string => {
@@ -329,7 +340,6 @@ export const markdownTable = (report: Results): string => {
   return buffer.join('\n');
 };
 
-
 // adds commas to the number so its easier to read.
 function humanizeNumber(x: number): string {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -345,6 +355,3 @@ type Testcase = {
   dir: string;
   elmFile: string;
 };
-
-
-
